@@ -8,7 +8,7 @@ import time
 import copy
 import logging
 
-serial_Maps = {'CMM-001':{'S15317609627055':'VD191S000329'}}
+serial_Maps = {'S15317609627055':['CMM-001','VD191S000329']}
 bins = {'CMM-001':'FRU_MBM_CMM_001_V102_2.bin', 'CMM-FIO':'FRU_MBM_CMM_FIO_V100_6.bin'}
 
 inter_files = []
@@ -18,28 +18,28 @@ def create_new_bin(model, sn):
         bin = 'bin\\'+ bins[model]
     else:
         bin = 'bin/{}'.format(bins[model])
-    if model not in serial_Maps.keys():
-        print("Error Model name. Skip programming!!")
-        logging.error("Error Model name. Skip programming!!")
-        return None
-    else:
-        map = serial_Maps[model]
-    if sn not in map.keys():
+    # if model not in bins.keys():
+    #     print("Error model name. Skip programming!!")
+    #     logging.error("Error model name. Skip programming!!")
+    #     return None
+    # else:
+    #     map = bins[model]
+    if sn not in serial_Maps.keys():
         print("Can not find this serial number {} in database. Skip programming!!".format(sn))
         logging.error("Can not find this serial number {} in database. Skip programming!!".format(sn))
         return None
     else:
-        bn = map[sn]
-    new_bin = ""
+        bn = serial_Maps[sn]
+
     new_bin = run_ModifyFRU(bin, 'bs', bn)
     #print(new_bin)
     inter_files.append(new_bin)
     new_bin = run_ModifyFRU(new_bin, 'ps', sn)
 
     if sys.platform.lower() == 'win32':
-        file_name= sn + '.bin'
+        file_name = sn + '.bin'
     else:
-        file_name= "bin/{}.bin".format(sn)
+        file_name = "bin/{}.bin".format(sn)
     #print(new_bin)
 
     if not path.isfile(file_name):
@@ -50,7 +50,7 @@ def create_new_bin(model, sn):
             else:
                 os.system('mv {} {}'.format(new_bin, file_name))
         except Exception as e:
-            print("Error has occurred. eave program!!" + str(e))
+            print("Error has occurred. Leave program!!" + str(e))
             logging.error("Failed to rename this file {}. In create_new_bin.".format(new_bin) + str(e))
             sys.exit()
 
@@ -244,36 +244,32 @@ def main():
     else:
         print("CMM Password is missing. Leave program!")
         sys.exit()
+
+    if 'CMM Serial Number' not in data.keys():
+        print("CMM Serial Number is missing. Leave program!")
+        sys.exit()
+
+    if data['CMM Serial Number'] not in serial_Maps.keys():
+        print("CMM Serial Number is invalid. Please check the serial number and run again. Leave program!")
+        sys.exit()
+    else:
+        sn = data['CMM Serial Number']
     print("Checking connection to {}".format(ip))
     if not check_connectivity(ip):
         print("Failed to access to {}. Leave program!!".format(ip))
         sys.exit()
-    print(data)
-    devices = []
-    if 'CMM Product Serial Number' in data.keys():
-        if data['CMM-001 or CMM-FIO'] and data['CMM-001 or CMM-FIO'] != '':
-            devices.append("CMM\t{}\t{}".format(data['CMM Product Serial Number'], data['CMM-001 or CMM-FIO']))
-        else:
-            print("CMM Model is missing. Skip programming FRU on CMM")
-            logging.warning("CMM Model is missing. Skip programming FRU on CMM")
-    # if 'B1' in data.keys():
-    #     if data['B1 Model'] and data['B1 Model'] != '':
-    #         devices.append("B1\t{}\t{}".format(data['B1'], data['B1 Model']))
-    #     else:
-    #         print("B1 Model is missing. Skip programming FRU on B1")
-    #         logging.warning("B1 Model is missing. Skip programming FRU on B1")
-    # if 'B2' in data.keys():
-    #     if data['B2 Model'] and data['B2 Model'] != '':
-    #         devices.append("B2\t{}\t{}".format(data['B2'], data['B2 Model']))
-    #     else:
-    #         print("B2 Model is missing. Skip programming FRU on B2")
-    #         logging.warning("B2 Model is missing. Skip programming FRU on B2")
-    print(devices)
-    for dev in devices:
-        (slot,sn, model) = re.split(r'\t', dev)
-        print("Programming FRU on {} in {}".format(sn,slot))
-        logging.info("Programming FRU on {} in {}".format(sn,slot))
-        Write_device(ip, username, password, slot, model, sn)
+    #print(data)
+    #devices = []
+    #devices.append("CMM\t{}\t{}".format(sn, serial_Maps[sn][0]))
+    print("Programming FRU on {} in {}".format(sn, slot))
+    logging.info("Programming FRU on {} in {}".format(sn,slot))
+    Write_device(ip, username, password, 'CMM', serial_Maps[sn][0], sn)
+    #print(devices)
+    # for dev in devices:
+    #     (slot,sn, model) = re.split(r'\t', dev)
+    #     print("Programming FRU on {} in {}".format(sn,slot))
+    #     logging.info("Programming FRU on {} in {}".format(sn,slot))
+    #     Write_device(ip, username, password, slot, model, sn)
 
 
 if __name__ == '__main__':
