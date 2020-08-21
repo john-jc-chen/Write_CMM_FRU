@@ -12,7 +12,7 @@ serial_Maps = {'S15317609627055':['CMM-001','VD191S000329']}
 bins = {'CMM-001':'FRU_MBM_CMM_001_V102_2.bin', 'CMM-FIO':'FRU_MBM_CMM_FIO_V100_6.bin'}
 
 inter_files = []
-logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.INFO , filename='Write_FRU.log')
+logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.INFO , filename='Write_CMM_FRU.log')
 def create_new_bin(model, sn):
     if sys.platform.lower() == 'win32':
         bin = 'bin\\'+ bins[model]
@@ -29,7 +29,7 @@ def create_new_bin(model, sn):
         logging.error("Can not find this serial number {} in database. Skip programming!!".format(sn))
         return None
     else:
-        bn = serial_Maps[sn]
+        bn = serial_Maps[sn][1]
 
     new_bin = run_ModifyFRU(bin, 'bs', bn)
     #print(new_bin)
@@ -90,7 +90,7 @@ def run_ModifyFRU(file_name, type, serial):
             return "{}.new.{}".format(file_name, serial)
     else:
         print("Error has occurred in create bin with serial {}. Leave program!!".format(serial))
-        logging.error("Error has occurred in run_ModifyFRU with serial {}. ".format(serial) + output.stderr.decode("utf-8", errors='ignore'))
+        logging.error("Error has occurred in run_ModifyFRU with serial {}. ".format(serial))
         sys.exit()
 
 def Write_FRU(ip,username,passwd,bin_file,sn,slot):
@@ -177,7 +177,7 @@ def Write_device(ip, Username, Passwd, slot, model, sn):
         #     product_serial = ''
     #print(board_serial, product_serial, slot)
     if board_serial and product_serial:
-        print("There is Board Serial and Product Serial on the device. Skip programming serial numbers on this device {}.\n Please check the information via Web GUI".format(sn))
+        print("There are Board Serial and Product Serial on the device. Skip programming serial numbers on this device {}.\n Please check the information via Web GUI".format(sn))
         logging.warning("There is Board Serial and Product Serial on the device. Skip programming serial numbers on this device {}.\n Please check the information via Web GUI".format(sn))
     else:
         bin_file = create_new_bin(model, sn)
@@ -261,8 +261,8 @@ def main():
     #print(data)
     #devices = []
     #devices.append("CMM\t{}\t{}".format(sn, serial_Maps[sn][0]))
-    print("Programming FRU on {} in {}".format(sn, slot))
-    logging.info("Programming FRU on {} in {}".format(sn,slot))
+    print("Programming CMM FRU on {} ".format(sn))
+    logging.info("Programming CMM FRU on {}".format(sn))
     Write_device(ip, username, password, 'CMM', serial_Maps[sn][0], sn)
     #print(devices)
     # for dev in devices:
